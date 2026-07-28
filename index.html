@@ -48,19 +48,21 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
 .hero{background:var(--white);border-bottom:1px solid var(--g20);padding:0;text-align:left;position:relative;overflow:hidden}
 .hero::before{display:none}
 .hero-in{max-width:var(--max);margin:0 auto;position:relative;display:grid;grid-template-columns:1.04fr .96fr;min-height:720px;padding:0 24px}
-.hero-media{grid-column:2;grid-row:1 / span 4;position:relative;z-index:1;min-height:720px;background:#fff;border-left:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:64px 48px}
+.hero-media{grid-column:2;grid-row:1 / span 4;position:relative;z-index:1;min-height:720px;background:#fff;border-left:0;display:flex;align-items:center;justify-content:flex-start;overflow:hidden;padding:64px 24px 64px 32px}
 .hero-media::before{display:none}
 .hero-media img{position:relative;z-index:1;width:100%;max-width:720px;height:auto;display:block;object-fit:contain;border:0;box-shadow:none}
 .hero-media-label{display:none}
-.hero-video-wrap{position:relative;width:100%;max-width:720px;cursor:pointer}
+.hero-video-wrap{position:relative;width:100%;max-width:680px;cursor:pointer}
 .hero-video-wrap video{width:100%;height:auto;display:block;border-radius:8px}
 .hero-video-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
 .hero-video-overlay.visible{opacity:1}
 .hero-video-btn{width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.55);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
 .hero-video-btn svg{width:28px;height:28px;fill:#fff}
-.hero-video-fullscreen{position:absolute;bottom:12px;right:12px;width:36px;height:36px;border-radius:6px;background:rgba(0,0,0,.5);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;opacity:0;transition:opacity .2s}
-.hero-video-fullscreen svg{width:18px;height:18px;fill:#fff}
-.hero-video-wrap:hover .hero-video-fullscreen{opacity:1}
+.hero-video-controls{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:8px 10px;background:linear-gradient(transparent,rgba(0,0,0,.45));border-radius:0 0 8px 8px;opacity:0;transition:opacity .2s}
+.hero-video-wrap:hover .hero-video-controls{opacity:1}
+.hero-video-ctrl-btn{width:34px;height:34px;border-radius:6px;background:rgba(0,0,0,.5);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.hero-video-ctrl-btn svg{width:18px;height:18px;fill:#fff}
+.hero-volume-slider{width:72px;height:4px;accent-color:#fff;cursor:pointer}
 .hero-ey{display:inline-flex;align-items:center;gap:8px;font:500 12px/1.2 var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--b50);margin-bottom:24px;border:0;padding:0}
 .hero-ey-dot{width:7px;height:7px;border-radius:50%;background:var(--b50)}
 .hero-h1{font-size:clamp(48px,5.2vw,78px);font-weight:300;line-height:1.02;color:var(--g100);margin-bottom:28px;letter-spacing:-.04em;max-width:760px}.hero-h1 span{display:block;white-space:nowrap}
@@ -382,56 +384,85 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
         <video id="heroVideo" src="video.mp4" autoplay muted loop playsinline></video>
         <div class="hero-video-overlay" id="videoOverlay">
           <button class="hero-video-btn" id="videoBtn" aria-label="Play/Pause">
-            <!-- pause icon (shown when paused) -->
             <svg id="iconPlay" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
             <svg id="iconPause" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
           </button>
         </div>
-        <button class="hero-video-fullscreen" id="videoFullscreen" aria-label="Toggle fullscreen">
-          <svg id="iconExpand" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-          <svg id="iconShrink" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
-        </button>
+        <div class="hero-video-controls">
+          <button class="hero-video-ctrl-btn" id="videoMute" aria-label="Toggle mute">
+            <svg id="iconMuted" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0 0 17.73 19l1.27 1.27L20.73 19 5.27 4 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+            <svg id="iconUnmuted" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </button>
+          <input class="hero-volume-slider" id="volumeSlider" type="range" min="0" max="1" step="0.05" value="0">
+          <button class="hero-video-ctrl-btn" id="videoFullscreen" aria-label="Toggle fullscreen">
+            <svg id="iconExpand" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+            <svg id="iconShrink" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+          </button>
+        </div>
       </div>
     </div>
     <script>
       (function(){
-        var video = document.getElementById('heroVideo');
-        var wrap  = document.getElementById('videoWrap');
-        var overlay = document.getElementById('videoOverlay');
+        var video    = document.getElementById('heroVideo');
+        var wrap     = document.getElementById('videoWrap');
+        var overlay  = document.getElementById('videoOverlay');
         var iconPlay = document.getElementById('iconPlay');
-        var iconPause = document.getElementById('iconPause');
-        var fsBtn = document.getElementById('videoFullscreen');
+        var iconPause= document.getElementById('iconPause');
+        var muteBtn  = document.getElementById('videoMute');
+        var iconMuted= document.getElementById('iconMuted');
+        var iconUnmuted = document.getElementById('iconUnmuted');
+        var volSlider= document.getElementById('volumeSlider');
+        var fsBtn    = document.getElementById('videoFullscreen');
         var iconExpand = document.getElementById('iconExpand');
         var iconShrink = document.getElementById('iconShrink');
+
+        // Start muted so autoplay works, volume slider at 0
+        video.muted = true;
+        video.volume = 0;
+        volSlider.value = 0;
 
         function showOverlay(){ overlay.classList.add('visible'); }
         function hideOverlay(){ overlay.classList.remove('visible'); }
 
-        function updateBtn(){
-          if(video.paused){
-            iconPlay.style.display='block';
-            iconPause.style.display='none';
-          } else {
-            iconPlay.style.display='none';
-            iconPause.style.display='block';
-          }
+        function updatePlayBtn(){
+          iconPlay.style.display  = video.paused ? 'block' : 'none';
+          iconPause.style.display = video.paused ? 'none'  : 'block';
         }
 
-        // Click on video area toggles play/pause and shows overlay
+        function updateMuteBtn(){
+          var muted = video.muted || video.volume === 0;
+          iconMuted.style.display   = muted ? 'block' : 'none';
+          iconUnmuted.style.display = muted ? 'none'  : 'block';
+        }
+
+        // Click on video area toggles play/pause
         wrap.addEventListener('click', function(e){
-          if(e.target === fsBtn || fsBtn.contains(e.target)) return;
+          if(muteBtn.contains(e.target) || fsBtn.contains(e.target) || e.target === volSlider) return;
           if(video.paused){ video.play(); } else { video.pause(); }
         });
 
-        video.addEventListener('pause', function(){
-          updateBtn();
-          showOverlay();
+        video.addEventListener('pause', function(){ updatePlayBtn(); showOverlay(); });
+        video.addEventListener('play',  function(){ updatePlayBtn(); setTimeout(hideOverlay, 600); });
+
+        // Mute toggle button
+        muteBtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          if(video.muted || video.volume === 0){
+            video.muted = false;
+            video.volume = volSlider.value > 0 ? parseFloat(volSlider.value) : 0.7;
+            volSlider.value = video.volume;
+          } else {
+            video.muted = true;
+          }
+          updateMuteBtn();
         });
 
-        video.addEventListener('play', function(){
-          updateBtn();
-          // Hide overlay shortly after playback resumes
-          setTimeout(hideOverlay, 600);
+        // Volume slider
+        volSlider.addEventListener('input', function(e){
+          e.stopPropagation();
+          video.volume = parseFloat(volSlider.value);
+          video.muted  = video.volume === 0;
+          updateMuteBtn();
         });
 
         // Fullscreen toggle
@@ -445,13 +476,8 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
         });
 
         document.addEventListener('fullscreenchange', function(){
-          if(document.fullscreenElement){
-            iconExpand.style.display='none';
-            iconShrink.style.display='block';
-          } else {
-            iconExpand.style.display='block';
-            iconShrink.style.display='none';
-          }
+          iconExpand.style.display = document.fullscreenElement ? 'none'  : 'block';
+          iconShrink.style.display = document.fullscreenElement ? 'block' : 'none';
         });
       })();
     </script>
