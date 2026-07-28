@@ -52,6 +52,15 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
 .hero-media::before{display:none}
 .hero-media img{position:relative;z-index:1;width:100%;max-width:720px;height:auto;display:block;object-fit:contain;border:0;box-shadow:none}
 .hero-media-label{display:none}
+.hero-video-wrap{position:relative;width:100%;max-width:720px;cursor:pointer}
+.hero-video-wrap video{width:100%;height:auto;display:block;border-radius:8px}
+.hero-video-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+.hero-video-overlay.visible{opacity:1}
+.hero-video-btn{width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.55);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.hero-video-btn svg{width:28px;height:28px;fill:#fff}
+.hero-video-fullscreen{position:absolute;bottom:12px;right:12px;width:36px;height:36px;border-radius:6px;background:rgba(0,0,0,.5);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;opacity:0;transition:opacity .2s}
+.hero-video-fullscreen svg{width:18px;height:18px;fill:#fff}
+.hero-video-wrap:hover .hero-video-fullscreen{opacity:1}
 .hero-ey{display:inline-flex;align-items:center;gap:8px;font:500 12px/1.2 var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--b50);margin-bottom:24px;border:0;padding:0}
 .hero-ey-dot{width:7px;height:7px;border-radius:50%;background:var(--b50)}
 .hero-h1{font-size:clamp(48px,5.2vw,78px);font-weight:300;line-height:1.02;color:var(--g100);margin-bottom:28px;letter-spacing:-.04em;max-width:760px}.hero-h1 span{display:block;white-space:nowrap}
@@ -369,8 +378,83 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
       <a href="https://ibmbobadvocates.netlify.app/" target="_blank" rel="noopener" class="btn-hg">Become a Bobhead</a>
     </div>
     <div class="hero-media">
-      <img src="https://s3.us.cloud-object-storage.appdomain.cloud/developer/default/dynamic_pages/images/home/bob.webp?w=480&h=270&fit=crop" alt="IBM Bob product interface">
+      <div class="hero-video-wrap" id="videoWrap">
+        <video id="heroVideo" src="video.mp4" autoplay muted loop playsinline></video>
+        <div class="hero-video-overlay" id="videoOverlay">
+          <button class="hero-video-btn" id="videoBtn" aria-label="Play/Pause">
+            <!-- pause icon (shown when paused) -->
+            <svg id="iconPlay" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="iconPause" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+        </div>
+        <button class="hero-video-fullscreen" id="videoFullscreen" aria-label="Toggle fullscreen">
+          <svg id="iconExpand" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+          <svg id="iconShrink" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+        </button>
+      </div>
     </div>
+    <script>
+      (function(){
+        var video = document.getElementById('heroVideo');
+        var wrap  = document.getElementById('videoWrap');
+        var overlay = document.getElementById('videoOverlay');
+        var iconPlay = document.getElementById('iconPlay');
+        var iconPause = document.getElementById('iconPause');
+        var fsBtn = document.getElementById('videoFullscreen');
+        var iconExpand = document.getElementById('iconExpand');
+        var iconShrink = document.getElementById('iconShrink');
+
+        function showOverlay(){ overlay.classList.add('visible'); }
+        function hideOverlay(){ overlay.classList.remove('visible'); }
+
+        function updateBtn(){
+          if(video.paused){
+            iconPlay.style.display='block';
+            iconPause.style.display='none';
+          } else {
+            iconPlay.style.display='none';
+            iconPause.style.display='block';
+          }
+        }
+
+        // Click on video area toggles play/pause and shows overlay
+        wrap.addEventListener('click', function(e){
+          if(e.target === fsBtn || fsBtn.contains(e.target)) return;
+          if(video.paused){ video.play(); } else { video.pause(); }
+        });
+
+        video.addEventListener('pause', function(){
+          updateBtn();
+          showOverlay();
+        });
+
+        video.addEventListener('play', function(){
+          updateBtn();
+          // Hide overlay shortly after playback resumes
+          setTimeout(hideOverlay, 600);
+        });
+
+        // Fullscreen toggle
+        fsBtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          if(!document.fullscreenElement){
+            wrap.requestFullscreen && wrap.requestFullscreen();
+          } else {
+            document.exitFullscreen && document.exitFullscreen();
+          }
+        });
+
+        document.addEventListener('fullscreenchange', function(){
+          if(document.fullscreenElement){
+            iconExpand.style.display='none';
+            iconShrink.style.display='block';
+          } else {
+            iconExpand.style.display='block';
+            iconShrink.style.display='none';
+          }
+        });
+      })();
+    </script>
   </div>
 </section>
 
