@@ -343,6 +343,39 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
 @media(max-width:900px){.builders-gallery{grid-template-columns:1fr 1fr;grid-auto-rows:260px}.builders-photo,.builders-photo:nth-child(n){grid-column:span 1;grid-row:span 1}}
 @media(max-width:640px){.builders-corner{padding:72px 0}.builders-gallery{grid-template-columns:1fr;grid-auto-rows:280px}.builders-photo,.builders-photo:nth-child(n){grid-column:1;grid-row:auto}}
 
+/* VIDEO EXPAND MODAL */
+.vid-modal-backdrop{
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(0,0,0,.88);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .25s ease;
+}
+.vid-modal-backdrop.open{opacity:1;pointer-events:auto;}
+.vid-modal-inner{
+  position:relative;
+  /* 16:9 container, never wider than 90vw, never taller than 90vh */
+  width:min(90vw, calc(90vh * 16 / 9));
+  aspect-ratio:16/9;
+  transform:scale(.94);
+  transition:transform .25s ease;
+}
+.vid-modal-backdrop.open .vid-modal-inner{transform:scale(1);}
+.vid-modal-inner video{
+  width:100%;height:100%;display:block;
+  object-fit:contain;background:#000;
+}
+.vid-modal-close{
+  position:absolute;top:-44px;right:0;
+  width:36px;height:36px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);
+  color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:2px;
+  transition:background .15s;
+}
+.vid-modal-close:hover{background:rgba(255,255,255,.25);}
+.vid-modal-close svg{width:20px;height:20px;fill:#fff;}
 </style>
 </head>
 <body>
@@ -380,6 +413,16 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
       <a href="https://community.ibm.com/community/user/groups/community-home?CommunityKey=300ac388-08f0-427e-a600-0199bfc9dd2a" target="_blank" rel="noopener" class="btn-hp">Explore IBM Bob Usergroup <svg class="arr" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.3 3.3L14 8l-4.7 4.7-.7-.7 3.8-3.8H2V7.8h10.4L8.6 4z"/></svg></a>
       <a href="https://aparnashah007.github.io/Bobheads/" target="_blank" rel="noopener" class="btn-hg">Become a Bobhead</a>
     </div>
+    <!-- Expand modal (outside hero-in flow so it overlays everything) -->
+    <div class="vid-modal-backdrop" id="vidModal" role="dialog" aria-modal="true" aria-label="Video expanded view">
+      <div class="vid-modal-inner">
+        <button class="vid-modal-close" id="vidModalClose" aria-label="Close expanded video">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <video id="vidModalVideo" src="video.mp4" loop playsinline></video>
+      </div>
+    </div>
+
     <div class="hero-media">
       <div class="hero-video-wrap" id="videoWrap">
         <video id="heroVideo" src="video.mp4" autoplay muted loop playsinline></video>
@@ -404,18 +447,23 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
     </div>
     <script>
       (function(){
-        var video    = document.getElementById('heroVideo');
-        var wrap     = document.getElementById('videoWrap');
-        var overlay  = document.getElementById('videoOverlay');
-        var iconPlay = document.getElementById('iconPlay');
-        var iconPause= document.getElementById('iconPause');
-        var muteBtn  = document.getElementById('videoMute');
-        var iconMuted= document.getElementById('iconMuted');
+        var video       = document.getElementById('heroVideo');
+        var wrap        = document.getElementById('videoWrap');
+        var overlay     = document.getElementById('videoOverlay');
+        var iconPlay    = document.getElementById('iconPlay');
+        var iconPause   = document.getElementById('iconPause');
+        var muteBtn     = document.getElementById('videoMute');
+        var iconMuted   = document.getElementById('iconMuted');
         var iconUnmuted = document.getElementById('iconUnmuted');
-        var volSlider= document.getElementById('volumeSlider');
-        var fsBtn    = document.getElementById('videoFullscreen');
-        var iconExpand = document.getElementById('iconExpand');
-        var iconShrink = document.getElementById('iconShrink');
+        var volSlider   = document.getElementById('volumeSlider');
+        var fsBtn       = document.getElementById('videoFullscreen');
+        var iconExpand  = document.getElementById('iconExpand');
+        var iconShrink  = document.getElementById('iconShrink');
+
+        // Modal elements
+        var modal       = document.getElementById('vidModal');
+        var modalVideo  = document.getElementById('vidModalVideo');
+        var modalClose  = document.getElementById('vidModalClose');
 
         // Start muted so autoplay works, volume slider at 0
         video.muted = true;
@@ -466,19 +514,44 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
           updateMuteBtn();
         });
 
-        // Fullscreen toggle
+        // --- Custom expand modal (replaces native fullscreen) ---
+        function openModal(){
+          // Mirror playback position and mute state into modal video
+          modalVideo.currentTime = video.currentTime;
+          modalVideo.muted = video.muted;
+          modalVideo.volume = video.volume;
+          modalVideo.play();
+          modal.classList.add('open');
+          document.body.style.overflow = 'hidden';
+          iconExpand.style.display = 'none';
+          iconShrink.style.display = 'block';
+        }
+
+        function closeModal(){
+          modal.classList.remove('open');
+          document.body.style.overflow = '';
+          modalVideo.pause();
+          // Keep hero video in sync with where modal video left off
+          video.currentTime = modalVideo.currentTime;
+          iconExpand.style.display = 'block';
+          iconShrink.style.display = 'none';
+        }
+
         fsBtn.addEventListener('click', function(e){
           e.stopPropagation();
-          if(!document.fullscreenElement){
-            wrap.requestFullscreen && wrap.requestFullscreen();
-          } else {
-            document.exitFullscreen && document.exitFullscreen();
-          }
+          if(modal.classList.contains('open')){ closeModal(); } else { openModal(); }
         });
 
-        document.addEventListener('fullscreenchange', function(){
-          iconExpand.style.display = document.fullscreenElement ? 'none'  : 'block';
-          iconShrink.style.display = document.fullscreenElement ? 'block' : 'none';
+        modalClose.addEventListener('click', closeModal);
+
+        // Close on backdrop click (outside the inner container)
+        modal.addEventListener('click', function(e){
+          if(e.target === modal){ closeModal(); }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function(e){
+          if(e.key === 'Escape' && modal.classList.contains('open')){ closeModal(); }
         });
       })();
     </script>
