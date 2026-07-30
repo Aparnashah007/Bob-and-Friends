@@ -361,9 +361,15 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
   transition:transform .25s ease;
 }
 .vid-modal-backdrop.open .vid-modal-inner{transform:scale(1);}
+/* when the single video lives inside the modal */
 .vid-modal-inner video{
   width:100%;height:100%;display:block;
   object-fit:contain;background:#000;
+  border-radius:0;
+}
+/* when it lives in the inline wrap, restore original style */
+.hero-video-wrap video{
+  width:100%;height:100%;display:block;object-fit:cover;
 }
 .vid-modal-close{
   position:absolute;top:-44px;right:0;
@@ -413,18 +419,19 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
       <a href="https://community.ibm.com/community/user/groups/community-home?CommunityKey=300ac388-08f0-427e-a600-0199bfc9dd2a" target="_blank" rel="noopener" class="btn-hp">Explore IBM Bob Usergroup <svg class="arr" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.3 3.3L14 8l-4.7 4.7-.7-.7 3.8-3.8H2V7.8h10.4L8.6 4z"/></svg></a>
       <a href="https://aparnashah007.github.io/Bobheads/" target="_blank" rel="noopener" class="btn-hg">Become a Bobhead</a>
     </div>
-    <!-- Expand modal (outside hero-in flow so it overlays everything) -->
+    <!-- Expand modal — no video here; the single video element is moved in/out -->
     <div class="vid-modal-backdrop" id="vidModal" role="dialog" aria-modal="true" aria-label="Video expanded view">
-      <div class="vid-modal-inner">
+      <div class="vid-modal-inner" id="vidModalInner">
         <button class="vid-modal-close" id="vidModalClose" aria-label="Close expanded video">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
-        <video id="vidModalVideo" src="video.mp4" loop playsinline></video>
+        <!-- video element is appended here dynamically when expanded -->
       </div>
     </div>
 
     <div class="hero-media">
       <div class="hero-video-wrap" id="videoWrap">
+        <!-- single video element — starts here, moves to modal on expand -->
         <video id="heroVideo" src="video.mp4" autoplay muted loop playsinline></video>
         <div class="hero-video-overlay" id="videoOverlay">
           <button class="hero-video-btn" id="videoBtn" aria-label="Play/Pause">
@@ -459,10 +466,8 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
         var fsBtn       = document.getElementById('videoFullscreen');
         var iconExpand  = document.getElementById('iconExpand');
         var iconShrink  = document.getElementById('iconShrink');
-
-        // Modal elements
         var modal       = document.getElementById('vidModal');
-        var modalVideo  = document.getElementById('vidModalVideo');
+        var modalInner  = document.getElementById('vidModalInner');
         var modalClose  = document.getElementById('vidModalClose');
 
         // Start muted so autoplay works, volume slider at 0
@@ -484,7 +489,7 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
           iconUnmuted.style.display = muted ? 'none'  : 'block';
         }
 
-        // Click on video area toggles play/pause
+        // Click on video area toggles play/pause (inline wrap only)
         wrap.addEventListener('click', function(e){
           if(muteBtn.contains(e.target) || fsBtn.contains(e.target) || e.target === volSlider) return;
           if(video.paused){ video.play(); } else { video.pause(); }
@@ -514,27 +519,27 @@ body{font-family:var(--font);font-size:15px;line-height:1.55;color:var(--g100);b
           updateMuteBtn();
         });
 
-        // --- Custom expand modal (replaces native fullscreen) ---
+        // --- Expand modal: move the SINGLE video element; never duplicate playback ---
         function openModal(){
-          // Mirror playback position and mute state into modal video
-          modalVideo.currentTime = video.currentTime;
-          modalVideo.muted = video.muted;
-          modalVideo.volume = video.volume;
-          modalVideo.play();
+          // Move the video element into the modal container (no second element, no echo)
+          modalInner.appendChild(video);
           modal.classList.add('open');
           document.body.style.overflow = 'hidden';
           iconExpand.style.display = 'none';
           iconShrink.style.display = 'block';
+          // Continue playing — same element, same audio context, no interruption
+          if(video.paused){ video.play(); }
         }
 
         function closeModal(){
+          // Move the video element back into the inline wrap (before the overlay div)
+          wrap.insertBefore(video, wrap.firstChild);
           modal.classList.remove('open');
           document.body.style.overflow = '';
-          modalVideo.pause();
-          // Keep hero video in sync with where modal video left off
-          video.currentTime = modalVideo.currentTime;
           iconExpand.style.display = 'block';
           iconShrink.style.display = 'none';
+          // Keep playing inline; updatePlayBtn reflects current state
+          updatePlayBtn();
         }
 
         fsBtn.addEventListener('click', function(e){
